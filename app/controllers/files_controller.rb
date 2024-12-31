@@ -242,41 +242,41 @@ class FilesController < ApplicationController
   end
 
   def check_file_access_flags
-    access_verifier = {}
-    begin
-      access_verifier = validate_access_verifier
-    rescue Canvas::Security::TokenExpired
-      # maybe their browser is being stupid and came to the files domain directly with an old verifier - try to go back and get a new one
-      return redirect_to_fallback_url if files_domain?
-    rescue Users::AccessVerifier::InvalidVerifier
-      nil
-    end
+    # access_verifier = {}
+    # begin
+    #   access_verifier = validate_access_verifier
+    # rescue Canvas::Security::TokenExpired
+    #   # maybe their browser is being stupid and came to the files domain directly with an old verifier - try to go back and get a new one
+    #   return redirect_to_fallback_url if files_domain?
+    # rescue Users::AccessVerifier::InvalidVerifier
+    #   nil
+    # end
 
-    if access_verifier[:user]
-      # attachment.rb checks for this session attribute when determining
-      # permissions, but it should be ignored by the rest of the models'
-      # permission checks
-      session["file_access_user_id"] = access_verifier[:user].global_id
-      session["file_access_real_user_id"] = access_verifier[:real_user]&.global_id
-      session["file_access_developer_key_id"] = access_verifier[:developer_key]&.global_id
-      session["file_access_root_account_id"] = access_verifier[:root_account]&.global_id
-      session["file_access_oauth_host"] = access_verifier[:oauth_host]
-      session["file_access_expiration"] = 1.hour.from_now.to_i
-      session.file_access_user = access_verifier[:user]
+    # if access_verifier[:user]
+    #   # attachment.rb checks for this session attribute when determining
+    #   # permissions, but it should be ignored by the rest of the models'
+    #   # permission checks
+    #   session["file_access_user_id"] = access_verifier[:user].global_id
+    #   session["file_access_real_user_id"] = access_verifier[:real_user]&.global_id
+    #   session["file_access_developer_key_id"] = access_verifier[:developer_key]&.global_id
+    #   session["file_access_root_account_id"] = access_verifier[:root_account]&.global_id
+    #   session["file_access_oauth_host"] = access_verifier[:oauth_host]
+    #   session["file_access_expiration"] = 1.hour.from_now.to_i
+    #   session.file_access_user = access_verifier[:user]
 
-      session[:permissions_key] = SecureRandom.uuid
+    #   session[:permissions_key] = SecureRandom.uuid
 
-      # if this was set we really just wanted to set the session on the files domain and return back to what we were doing before
-      if access_verifier[:return_url]
-        return redirect_to access_verifier[:return_url]
-      end
-    end
-    # These sessions won't get deleted when the user logs out since this
-    # is on a separate domain, so we've added our own (stricter) timeout.
-    if session && session["file_access_user_id"] && session["file_access_expiration"].to_i > Time.now.to_i
-      session["file_access_expiration"] = 1.hour.from_now.to_i
-      session[:permissions_key] = SecureRandom.uuid
-    end
+    #   # if this was set we really just wanted to set the session on the files domain and return back to what we were doing before
+    #   if access_verifier[:return_url]
+    #     return redirect_to access_verifier[:return_url]
+    #   end
+    # end
+    # # These sessions won't get deleted when the user logs out since this
+    # # is on a separate domain, so we've added our own (stricter) timeout.
+    # if session && session["file_access_user_id"] && session["file_access_expiration"].to_i > Time.now.to_i
+    #   session["file_access_expiration"] = 1.hour.from_now.to_i
+    #   session[:permissions_key] = SecureRandom.uuid
+    # end
     true
   end
   protected :check_file_access_flags
